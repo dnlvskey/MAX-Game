@@ -44,7 +44,11 @@ export function relativeCompositionRects({device,reference=null,button=null,icon
 // the device shrinks only when it would leave the frame.
 export function columnCompositionRects({device,reference=null,button=null,icons=[],timers=[]},rules,frame,unit){
  const pct=(value,fallback)=>(value??fallback)*unit/100,right=frame.x+frame.width,bottom=frame.y+frame.height;
- const top=frame.y+pct(rules.topInset,0);
+ // Queue and task timer: one row in the top right corner, half size, in their original order.
+ const timerScale=rules.timerScale??.5,row=timers.map((r,i)=>({r,i})).sort((a,b)=>a.r.x-b.r.x),placedTimers=[];
+ const rowHeight=row.length?Math.max(...row.map(({r})=>r.height*timerScale)):0;
+ for(let n=row.length-1,x=right;n>=0;n--){const {r,i}=row[n],w=r.width*timerScale;placedTimers[i]={...r,x:x-w,y:frame.y,width:w,height:r.height*timerScale};x-=w+pct(rules.timerGap,4);}
+ const top=frame.y+(row.length?rowHeight+pct(rules.timerReferenceGap,6):0)+pct(rules.topInset,0);
  let ref=reference;
  if(reference){const k=Math.min(frame.width/reference.width,rules.referenceWidth===undefined?1:rules.referenceWidth*unit/100/reference.width);
   ref={...reference,width:reference.width*k,height:reference.height*k};ref.x=frame.x+(frame.width-ref.width)/2;ref.y=top;}
@@ -59,7 +63,7 @@ export function columnCompositionRects({device,reference=null,button=null,icons=
  const scaled=icons.map(r=>({k:iconWidth/r.width,r})),total=scaled.reduce((v,{k,r})=>v+r.height*k,0);
  const gap=icons.length>1?Math.min(pct(rules.iconGap,8),Math.max(0,(d.height-total)/(icons.length-1))):0;
  let y=d.y;const placed=scaled.map(({k,r})=>{const v={...r,x:frame.x,y,width:r.width*k,height:r.height*k};y+=v.height+gap;return v;});
- return{device:d,reference:ref,button:b,icons:placed,timers:timers.map(r=>centeredRect(r,cx(r)+cx(d)-cx(device),cy(r)+cy(d)-cy(device)))};
+ return{device:d,reference:ref,button:b,icons:placed,timers:placedTimers};
 }
 export function affineRect(r,before,after){const scale=after.width/before.width;return{...r,x:after.x+(r.x-before.x)*scale,y:after.y+(r.y-before.y)*scale,w:r.w*scale,h:r.h*scale,...(Number.isFinite(r.scale)?{scale:r.scale*scale}:{})};}
 export function compositionRect(r,p,anchor,unit=1){const a=anchor??{x:r.x+r.width/2,y:r.y+r.height/2};return{x:a.x+(r.x-a.x)*p.scale+p.x*unit,y:a.y+(r.y-a.y)*p.scale+p.y*unit,width:r.width*p.scale,height:r.height*p.scale};}
