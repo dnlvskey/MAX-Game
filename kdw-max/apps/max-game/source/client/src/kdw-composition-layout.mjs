@@ -44,10 +44,11 @@ export function relativeCompositionRects({device,reference=null,button=null,icon
 // the device shrinks only when it would leave the frame.
 export function columnCompositionRects({device,reference=null,button=null,icons=[],timers=[]},rules,frame,unit){
  const pct=(value,fallback)=>(value??fallback)*unit/100,right=frame.x+frame.width,bottom=frame.y+frame.height;
- // Queue and task timer: one row in the top right corner, half size, in their original order.
+ // Queue and task timer: one row in the top left corner, half size, in their original order.
+ // The top right corner of the row belongs to the portrait MAX logo (kdw-stand-adapter).
  const timerScale=rules.timerScale??.5,row=timers.map((r,i)=>({r,i})).sort((a,b)=>a.r.x-b.r.x),placedTimers=[];
  const rowHeight=row.length?Math.max(...row.map(({r})=>r.height*timerScale)):0;
- for(let n=row.length-1,x=right;n>=0;n--){const {r,i}=row[n],w=r.width*timerScale;placedTimers[i]={...r,x:x-w,y:frame.y,width:w,height:r.height*timerScale};x-=w+pct(rules.timerGap,4);}
+ for(let n=0,x=frame.x;n<row.length;n++){const {r,i}=row[n],w=r.width*timerScale;placedTimers[i]={...r,x,y:frame.y,width:w,height:r.height*timerScale};x+=w+pct(rules.timerGap,4);}
  const top=frame.y+(row.length?rowHeight+pct(rules.timerReferenceGap,6):0)+pct(rules.topInset,0);
  let ref=reference;
  if(reference){const k=Math.min(frame.width/reference.width,rules.referenceWidth===undefined?1:rules.referenceWidth*unit/100/reference.width);
@@ -110,7 +111,7 @@ export function createCompositionLayout({document,params,arena,getSize,getHost,g
   const hostBounds=host.getBoundingClientRect(),virtual=presentation?.deviceRect,restDevice=virtual?{x:hostBounds.x+virtual.x*sceneUnit,y:hostBounds.y+virtual.y*sceneUnit,width:virtual.width*sceneUnit,height:virtual.height*sceneUnit}:basis?.get(device),anchor=restDevice?{x:cx(restDevice),y:cy(restDevice)}:null;
   const records=targets.filter(([el])=>live(el)).map(([el,p,oldAnchor])=>{const before=el.getBoundingClientRect(),rest=basis?.get(el)??before;return{el,p,before,rest,target:p?compositionRect(rest,p,standby?oldAnchor:anchor,unit):rest};});
   if(!standby){
-   const d=records.find(r=>r.el===device),ref=records.find(r=>r.el.matches('.instruction')),buttons=records.filter(r=>r.el.matches(buttonSelector)),icons=records.filter(r=>r.el.matches('.object[data-object]')),timers=records.filter(r=>r.el.matches('.v5-device-timer'));
+   const d=records.find(r=>r.el===device),ref=records.find(r=>r.el.matches('.instruction')),buttons=records.filter(r=>r.el.matches(buttonSelector)),icons=records.filter(r=>r.el.matches('.object[data-object]')),timers=records.filter(r=>r.el.matches(pixelMapPortrait()?'.v5-device-timer:not([data-scan-wait-timer],[data-scan-queue-count])':'.v5-device-timer'));
    if(restDevice){const hostRect=hostBounds,b=buttons.length===1?buttons[0]:null,result=relativeCompositionRects({device:compositionRect(restDevice,current.device,anchor,unit),reference:ref?.target,button:b?.target,icons:icons.map(r=>r.target),timers:timers.map(r=>r.target)},{...current.relative,...(pixelMapPortrait()?{arrangement:'column'}:{}),deviceScale:(current.relative.deviceScale??1)*deviceClassScale(pixelMapPortrait()?{cardsScale:1,...current.relative}:current.relative,presentation?.kind??kind,presentation?.screen??screen)},{x:hostRect.x+hostRect.width/2,y:hostRect.y+hostRect.height/2},relativeUnit,params.get('transitionLayout')==='device'?'device':'reference',{x:hostRect.x,y:hostRect.y,width:hostRect.width,height:hostRect.height});if(d)d.target=result.device;if(ref)ref.target=result.reference;if(b)b.target=result.button;icons.forEach((r,i)=>r.target=result.icons[i]);timers.forEach((r,i)=>r.target=result.timers[i]);}
   }
   let settling=false;
