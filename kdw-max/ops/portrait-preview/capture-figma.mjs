@@ -124,6 +124,12 @@ try {
       }
       if (f.variant === 'success') await sleep(700);
       if (f.variant === 'keyboard') { await js(`document.querySelector('[data-pc-field="${f.taskId === 'blogger.channel' ? 'name' : 'reply'}"]').click()`); await sleep(800); }
+      // The composition eases the device, reference and icons towards their new
+      // place after a screen change; capture only once they stop moving.
+      const geometry = `JSON.stringify([...document.querySelectorAll('.route-phone,.task-dialog .instruction,.object[data-object],.v5-device-timer,.kdw-transition-button')].map(e=>{const r=e.getBoundingClientRect();return [Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)]}))`;
+      for (let last = '', stable = 0, start = Date.now(); stable < 4 && Date.now() - start < 15000; await sleep(150)) {
+        const now = await js(geometry); stable = now === last ? stable + 1 : 0; last = now;
+      }
       await js(`Promise.all([...document.images].filter(e=>!e.closest('[hidden]')&&e.getBoundingClientRect().width>0).map(e=>e.decode().catch(()=>null)))`);
       await js('document.fonts.ready.then(()=>true)');
       if (f.variant === 'success') {

@@ -55,16 +55,19 @@ export function pixelIdleLayout(zone){
    y:bodyTop+(bodyHeight-gridHeight)/2+Math.floor(i/2)*(iconSize+96+gap)
   }))};
 }
-// Vertical stand menu, as on the stand render: logo, banner video, then the
-// four missions in a 2×2 grid. Same mission order and icon size as landscape.
-function portraitIdleLayout(zone){
- const iconSize=200,gap=64,logoWidth=Math.min(480,zone.w*.6),logoHeight=logoWidth*140/440.4539794921875;
- const videoWidth=zone.w,videoHeight=videoWidth*550/960,cellWidth=zone.w/2,gridHeight=2*(iconSize+96)+gap,headingGap=64,bodyGap=72;
- const top=Math.max(0,(zone.h-logoHeight-headingGap-videoHeight-bodyGap-gridHeight)/2),videoTop=top+logoHeight+headingGap,gridTop=videoTop+videoHeight+bodyGap;
+// Vertical stand menu, as on the stand render: logo and banner video on top,
+// the four missions in a 2×2 grid within arm's reach (0.9–1.8 m, 23.6–72.1% of
+// the zone height), the grid's lower captions ending at the lower edge.
+// Same mission order and icon size as landscape. Self-contained for the preview.
+export function portraitIdleLayout(zone){
+ const iconSize=200,gap=64,cellWidth=zone.w/2,gridHeight=2*(iconSize+96)+gap;
+ const gridTop=Math.max(zone.h*.236,zone.h*.721-gridHeight);
+ const logoWidth=Math.min(360,zone.w*.45),logoHeight=logoWidth*140/440.4539794921875,videoTop=logoHeight+40;
+ const videoHeight=Math.max(0,gridTop-48-videoTop),videoWidth=Math.min(zone.w,videoHeight*960/550);
  return{centre:{x:zone.w/2,y:zone.h/2},gap,iconSize,rowShift:0,
   missionOrder:['digital-id','business','blogger','communication'],
-  logo:{x:(zone.w-logoWidth)/2,y:top,width:logoWidth,height:logoHeight},
-  video:{x:0,y:videoTop,width:videoWidth,height:videoHeight},
+  logo:{x:(zone.w-logoWidth)/2,y:0,width:logoWidth,height:logoHeight},
+  video:{x:(zone.w-videoWidth)/2,y:videoTop,width:videoWidth,height:videoWidth*550/960},
   icons:Array.from({length:4},(_,i)=>({x:cellWidth*(i%2+.5)-iconSize/2,y:gridTop+Math.floor(i/2)*(iconSize+96+gap)}))};
 }
 export function pixelActivityViewport(){
@@ -86,8 +89,8 @@ export function alignPixelKeyboard(node){
  if(!area){node.style.left=`calc(50% + ${x}px)`;node.style.bottom=-y+'px';return false;}
  // Lift the four key rows under the route icons instead of anchoring them
  // to the lower safe edge; lift by another 15% of the safe height on all walls.
- // Portrait: the keys sit on the lower edge, below the phone and its button.
- const portrait=pixelMapPortrait(),lift=portrait?0:area.height*.23;
+ // Portrait: the keys end at the lower edge of arm's reach (0.9 m, 72.1% of the safe height).
+ const portrait=pixelMapPortrait(),lift=portrait?area.height*(1-.721):area.height*.23;
  Object.assign(node.style,{left:((area.left+area.right)/2+x)+'px',top:'auto',bottom:(innerHeight-area.bottom+lift-y)+'px'});
  node.style.setProperty('--kdw-scale',portrait?Math.min(area.width/1600,area.height*.24/900):Math.min(area.width/1600,area.height/900));return true;
 }

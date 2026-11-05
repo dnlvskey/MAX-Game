@@ -37,13 +37,17 @@ export function relativeCompositionRects({device,reference=null,button=null,icon
  const oldCenter=icons.length?icons.reduce((v,r)=>v+cx(r),0)/icons.length:cx(device),newCenter=placed.length?placed.reduce((v,r)=>v+cx(r),0)/placed.length:cx(d);
  return{device:d,reference:ref,button:b,icons:placed,timers:timers.map(r=>centeredRect(r,cx(r)+newCenter-oldCenter,cy(d)+(cy(r)-cy(device))))};
 }
-// PORTRAIT-LAYOUT-C («Крупный телефон»): the reference spans the top of the
-// frame, task icons stack in a column on the left, the enlarged device stands
-// right of them and the button sits under the device. Falling cards keep the
-// field right of the device. Percent rules use the same composition unit;
-// the device shrinks only when it would leave the frame.
+// PORTRAIT-LAYOUT-C («Крупный телефон»): read-only parts on top (queue, timer,
+// logo, reference), everything touched within arm's reach. By the stand render
+// the reach zone is 0.9–1.8 m from the floor: 23.6–72.1% of the frame height
+// (rules.reachTop/reachBottom). The device fits into that zone, task icons stack
+// on its left, the transition button stands on its right at the lower edge of
+// the zone (under the device when a wide PC screen leaves no room). Falling
+// cards keep the field right of the device. Self-contained: the portrait
+// preview injects this function into the shipped bundle as is.
 export function columnCompositionRects({device,reference=null,button=null,icons=[],timers=[]},rules,frame,unit){
- const pct=(value,fallback)=>(value??fallback)*unit/100,right=frame.x+frame.width,bottom=frame.y+frame.height;
+ const pct=(value,fallback)=>(value??fallback)*unit/100,right=frame.x+frame.width;
+ const reachTop=frame.y+frame.height*(rules.reachTop??23.6)/100,reachBottom=frame.y+frame.height*(rules.reachBottom??72.1)/100;
  // Queue and task timer: one row in the top left corner at 0.35 size (as in the brief), in their original order.
  // The top right corner of the row belongs to the portrait MAX logo (kdw-stand-adapter).
  const timerScale=rules.timerScale??.35,row=timers.map((r,i)=>({r,i})).sort((a,b)=>a.r.x-b.r.x),placedTimers=[];
@@ -53,14 +57,18 @@ export function columnCompositionRects({device,reference=null,button=null,icons=
  let ref=reference;
  if(reference){const k=Math.min(frame.width/reference.width,rules.referenceWidth===undefined?1:rules.referenceWidth*unit/100/reference.width);
   ref={...reference,width:reference.width*k,height:reference.height*k};ref.x=frame.x+(frame.width-ref.width)/2;ref.y=top;}
- const iconWidth=icons.length?pct(rules.iconWidth,17):0,sideGap=icons.length?pct(rules.iconsDeviceGap,6):0;
+ const iconWidth=icons.length?pct(rules.iconWidth,17):0,sideGap=icons.length?pct(rules.iconsDeviceGap,6):0,gapX=pct(rules.buttonGap,32/390*100);
  // A hidden reference (posts/store games) keeps its slot, so the phone does not jump up and back.
- const deviceTop=(ref?ref.y+ref.height:top+pct(rules.referenceReserve,56))+pct(rules.deviceReferenceGap,8),buttonGap=button?pct(rules.buttonGap,32/390*100):0;
+ const deviceTop=Math.max(reachTop,(ref?ref.y+ref.height:top+pct(rules.referenceReserve,56))+pct(rules.deviceReferenceGap,8));
  const left=frame.x+iconWidth+sideGap,requested=rules.deviceScale??1;
- const fit=Math.max(.1,Math.min(requested,(right-left)/device.width,(bottom-deviceTop-buttonGap)/(device.height+(button?.height??0))));
+ const place=below=>Math.max(.1,Math.min(requested,(right-left)/device.width,(reachBottom-deviceTop-(below&&button?gapX+button.height:0))/device.height));
+ let fit=place(false),buttonWidth=button?Math.min(button.width*fit,device.width*fit):0;
+ const beside=!button||right-(left+device.width*fit+gapX)>=buttonWidth;
+ if(!beside){fit=place(true);buttonWidth=Math.min(button.width*fit,device.width*fit);}
  const d={...device,x:left,y:deviceTop,width:device.width*fit,height:device.height*fit};
- const b=button?{...button,width:Math.min(button.width*fit,d.width),height:button.height*Math.min(fit,d.width/button.width)}:null;
- if(b){b.x=d.x+(d.width-b.width)/2;b.y=d.y+d.height+buttonGap;}
+ const b=button?{...button,width:buttonWidth,height:button.height*buttonWidth/button.width}:null;
+ if(b&&beside){b.x=d.x+d.width+gapX+(right-d.x-d.width-gapX-b.width)/2;b.y=d.y+d.height-b.height;}
+ else if(b){b.x=d.x+(d.width-b.width)/2;b.y=d.y+d.height+gapX;}
  const scaled=icons.map(r=>({k:iconWidth/r.width,r})),total=scaled.reduce((v,{k,r})=>v+r.height*k,0);
  const gap=icons.length>1?Math.min(pct(rules.iconGap,8),Math.max(0,(d.height-total)/(icons.length-1))):0;
  let y=d.y;const placed=scaled.map(({k,r})=>{const v={...r,x:frame.x,y,width:r.width*k,height:r.height*k};y+=v.height+gap;return v;});
