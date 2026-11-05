@@ -46,6 +46,9 @@ once('{...X.relative,deviceScale:(X.relative.deviceScale??1)*fF(X.relative,ne?.k
 if ([...s.matchAll(/=[A-Za-z_$][\w$]*\.width\/3072,/g)].length !== 1) throw Error('composition unit site not unique');
 s = s.replace(/(=[A-Za-z_$][\w$]*)\.width\/3072,/g, '$1.width/um.width,');
 once('top:1536*.07/s.scale+"px"', 'top:um.height*um.safeFraction/s.scale+"px"');
+// journey-v5-device-timer.mjs: palm wait timer and queue in a row above the palm.
+once('function DP({left:n,top:e,width:t,height:s}){let i=n+t/2,a=e+s/2,',
+  'function DP({left:n,top:e,width:t,height:s}){let i=n+t/2,a=e+s/2;if(__kdwPortrait){let q={left:i-wr.width-24,top:e-64-wr.height,...wr};return{timer:{...q,left:i+24},queue:q}}let ');
 // kdw-contact-area.mjs (not in git): the touch radius is authored for the 3072-wide display.
 once('(globalThis.innerWidth??3072)/3072', '(globalThis.innerWidth??um.width)/um.width');
 
