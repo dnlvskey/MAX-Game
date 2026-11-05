@@ -48,11 +48,11 @@ export function relativeCompositionRects({device,reference=null,button=null,icon
 export function columnCompositionRects({device,reference=null,button=null,icons=[],timers=[]},rules,frame,unit){
  const pct=(value,fallback)=>(value??fallback)*unit/100,right=frame.x+frame.width;
  const reachTop=frame.y+frame.height*(rules.reachTop??23.6)/100,reachBottom=frame.y+frame.height*(rules.reachBottom??72.1)/100;
- // Queue and task timer: one row in the top left corner at 0.35 size (as in the brief), in their original order.
- // The top right corner of the row belongs to the portrait MAX logo (kdw-stand-adapter).
+ // Queue and task timer: one row in the top right corner at 0.35 size, in their original order,
+ // as in the brief mock-up. The top left corner belongs to the portrait MAX logo (kdw-stand-adapter).
  const timerScale=rules.timerScale??.35,row=timers.map((r,i)=>({r,i})).sort((a,b)=>a.r.x-b.r.x),placedTimers=[];
  const rowHeight=row.length?Math.max(...row.map(({r})=>r.height*timerScale)):0;
- for(let n=0,x=frame.x;n<row.length;n++){const {r,i}=row[n],w=r.width*timerScale;placedTimers[i]={...r,x,y:frame.y,width:w,height:r.height*timerScale};x+=w+pct(rules.timerGap,4);}
+ for(let n=row.length-1,x=right;n>=0;n--){const {r,i}=row[n],w=r.width*timerScale;placedTimers[i]={...r,x:x-w,y:frame.y,width:w,height:r.height*timerScale};x-=w+pct(rules.timerGap,4);}
  const top=frame.y+(row.length?rowHeight+pct(rules.timerReferenceGap,6):0)+pct(rules.topInset,0);
  let ref=reference;
  if(reference){const k=Math.min(frame.width/reference.width,rules.referenceWidth===undefined?1:rules.referenceWidth*unit/100/reference.width);
