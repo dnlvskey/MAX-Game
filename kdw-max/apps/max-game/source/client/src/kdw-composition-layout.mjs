@@ -49,7 +49,8 @@ export function columnCompositionRects({device,reference=null,button=null,icons=
  if(reference){const k=Math.min(frame.width/reference.width,rules.referenceWidth===undefined?1:rules.referenceWidth*unit/100/reference.width);
   ref={...reference,width:reference.width*k,height:reference.height*k};ref.x=frame.x+(frame.width-ref.width)/2;ref.y=top;}
  const iconWidth=icons.length?pct(rules.iconWidth,22):0,sideGap=icons.length?pct(rules.iconsDeviceGap,6):0;
- const deviceTop=(ref?ref.y+ref.height:top)+pct(rules.deviceReferenceGap,8),buttonGap=button?pct(rules.buttonGap,32/390*100):0;
+ // A hidden reference (posts/store games) keeps its slot, so the phone does not jump up and back.
+ const deviceTop=(ref?ref.y+ref.height:top+pct(rules.referenceReserve,56))+pct(rules.deviceReferenceGap,8),buttonGap=button?pct(rules.buttonGap,32/390*100):0;
  const left=frame.x+iconWidth+sideGap,requested=rules.deviceScale??1;
  const fit=Math.max(.1,Math.min(requested,(right-left)/device.width,(bottom-deviceTop-buttonGap)/(device.height+(button?.height??0))));
  const d={...device,x:left,y:deviceTop,width:device.width*fit,height:device.height*fit};
