@@ -91,8 +91,16 @@ export function alignPixelKeyboard(node){
  Object.assign(node.style,{left:((area.left+area.right)/2+x)+'px',top:'auto',bottom:(innerHeight-area.bottom+lift-y)+'px'});
  node.style.setProperty('--kdw-scale',portrait?Math.min(area.width/1600,area.height*.24/900):Math.min(area.width/1600,area.height/900));return true;
 }
+// Variant C as in the brief: a compact reference (no eyebrow, smaller type, height
+// by content) and task icons without captions, so the phone sits higher.
+export const PORTRAIT_CSS=`html[data-pixel-map-profile=portrait] #circles .task-dialog .instruction{height:auto!important;padding:28px 36px!important;gap:10px!important}
+html[data-pixel-map-profile=portrait] #circles .task-dialog .instruction .eyebrow{display:none!important}
+html[data-pixel-map-profile=portrait] #circles .task-dialog .instruction h2{font-size:38px!important;line-height:1.1!important}
+html[data-pixel-map-profile=portrait] #circles .task-dialog .instruction p{font-size:27px!important;line-height:1.2!important}
+html[data-pixel-map-profile=portrait] #circles .object[data-object] .icon-caption{display:none!important}`;
 export function installPixelMapInput(){
  const root=document.documentElement;root.dataset.pixelMap='true';root.dataset.pixelMapProfile=PIXEL_MAP.name;let ignored=0;
+ if(PIXEL_MAP.name==='portrait'&&!document.getElementById('kdw-portrait-style')){const style=document.createElement('style');style.id='kdw-portrait-style';style.textContent=PORTRAIT_CSS;document.head.append(style);}
  const reject=e=>{
   const rect=pixelMapViewport(innerWidth,innerHeight).touch;
   let x=e.clientX,y=e.clientY;

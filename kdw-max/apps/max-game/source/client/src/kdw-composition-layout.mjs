@@ -44,16 +44,16 @@ export function relativeCompositionRects({device,reference=null,button=null,icon
 // the device shrinks only when it would leave the frame.
 export function columnCompositionRects({device,reference=null,button=null,icons=[],timers=[]},rules,frame,unit){
  const pct=(value,fallback)=>(value??fallback)*unit/100,right=frame.x+frame.width,bottom=frame.y+frame.height;
- // Queue and task timer: one row in the top left corner, half size, in their original order.
+ // Queue and task timer: one row in the top left corner at 0.35 size (as in the brief), in their original order.
  // The top right corner of the row belongs to the portrait MAX logo (kdw-stand-adapter).
- const timerScale=rules.timerScale??.5,row=timers.map((r,i)=>({r,i})).sort((a,b)=>a.r.x-b.r.x),placedTimers=[];
+ const timerScale=rules.timerScale??.35,row=timers.map((r,i)=>({r,i})).sort((a,b)=>a.r.x-b.r.x),placedTimers=[];
  const rowHeight=row.length?Math.max(...row.map(({r})=>r.height*timerScale)):0;
  for(let n=0,x=frame.x;n<row.length;n++){const {r,i}=row[n],w=r.width*timerScale;placedTimers[i]={...r,x,y:frame.y,width:w,height:r.height*timerScale};x+=w+pct(rules.timerGap,4);}
  const top=frame.y+(row.length?rowHeight+pct(rules.timerReferenceGap,6):0)+pct(rules.topInset,0);
  let ref=reference;
  if(reference){const k=Math.min(frame.width/reference.width,rules.referenceWidth===undefined?1:rules.referenceWidth*unit/100/reference.width);
   ref={...reference,width:reference.width*k,height:reference.height*k};ref.x=frame.x+(frame.width-ref.width)/2;ref.y=top;}
- const iconWidth=icons.length?pct(rules.iconWidth,22):0,sideGap=icons.length?pct(rules.iconsDeviceGap,6):0;
+ const iconWidth=icons.length?pct(rules.iconWidth,17):0,sideGap=icons.length?pct(rules.iconsDeviceGap,6):0;
  // A hidden reference (posts/store games) keeps its slot, so the phone does not jump up and back.
  const deviceTop=(ref?ref.y+ref.height:top+pct(rules.referenceReserve,56))+pct(rules.deviceReferenceGap,8),buttonGap=button?pct(rules.buttonGap,32/390*100):0;
  const left=frame.x+iconWidth+sideGap,requested=rules.deviceScale??1;
